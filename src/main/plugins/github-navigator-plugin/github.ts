@@ -118,23 +118,31 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
 
     private async search(route: Route, { octokit, cached }: GH): Promise<SearchResultItem[]> {
         if (route.items.length === 0) {
+            // owner & orgs
             return filterResults(route.path, [
                 ...(await cached("/", async () => [
                     await searchResultItemFromUser(this.pluginType)((await octokit.users.getAuthenticated()).data),
                 ])),
-                ...(await octokit.rest.orgs.listForAuthenticatedUser({ per_page: 200 })).data.map(
+                ...(await octokit.rest.orgs.listForAuthenticatedUser({ per_page: 500 })).data.map(
                     searchResultItemFromOrg(this.pluginType),
                 ),
             ]);
         } else if (route.items.length === 1) {
+            // repos
             const owner = route.items[0];
             return filterResults(
                 route.path,
-                await cached(route.complete, async () =>
-                    (
-                        await octokit.rest.repos.listForOrg({ org: owner })
-                    ).data.map(searchResultItemFromRepo(this.pluginType)),
-                ),
+                await cached(route.complete, async () => {
+                    if (owner === (await octokit.users.getAuthenticated()).data.login) {
+                        return (await octokit.rest.repos.listForAuthenticatedUser({ per_page: 500 })).data.map(
+                            searchResultItemFromRepo(this.pluginType),
+                        );
+                    } else {
+                        return (await octokit.rest.repos.listForOrg({ org: owner, per_page: 500 })).data.map(
+                            searchResultItemFromRepo(this.pluginType),
+                        );
+                    }
+                }),
             );
         } else {
             return [];

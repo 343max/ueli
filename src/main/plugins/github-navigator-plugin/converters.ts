@@ -39,7 +39,12 @@ export const searchResultItemFromUser =
     });
 
 export const searchResultItemFromRepo = (pluginType: PluginType) =>
-    function (repo: Awaited<ReturnType<Octokit["rest"]["repos"]["listForOrg"]>>["data"][number]): SearchResultItem {
+    function (
+        repo: Pick<
+            Awaited<ReturnType<Octokit["rest"]["repos"]["listForOrg"]>>["data"][number],
+            "name" | "description" | "owner"
+        >,
+    ): SearchResultItem {
         return {
             name: repo.name,
             description: repo.description ?? "",
