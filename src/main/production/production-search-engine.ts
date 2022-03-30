@@ -223,7 +223,7 @@ export function getProductionSearchEngine(
         new ColorConverterPlugin(config.colorConverterOptions, electronClipboardCopier),
         new DictionaryPlugin(config.dictionaryOptions, electronClipboardCopier, getGoogleDictionaryDefinitions),
         new WeatherPlugin(config, translationSet, electronClipboardCopier),
-        new GitHubNavigationPlugin(config, translationSet, electronClipboardCopier),
+        new GitHubNavigationPlugin(config, translationSet, electronClipboardCopier, urlExecutor),
     ];
 
     const fallbackPlugins: ExecutionPlugin[] = [webSearchPlugin];

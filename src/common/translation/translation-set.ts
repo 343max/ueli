@@ -375,4 +375,10 @@ export interface TranslationSet {
     githubNavigator: string;
     githubPrefix: string;
     githubApiKey: string;
+
+    githubNoApiKeyErrorMessage: string;
+    githubNoApiKeyErrorDescription: string;
+
+    githubInvalidApiKeyErrorMessage: string;
+    githubInvalidApiKeyErrorDescription: string;
 }
