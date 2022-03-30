@@ -6,6 +6,6 @@ export interface GitHubNavigatorOptions {
 
 export const defaultGitHubNavigatorOptions: GitHubNavigatorOptions = {
     isEnabled: false,
-    prefix: "gh",
+    prefix: "gh ",
     apiKey: null,
 };

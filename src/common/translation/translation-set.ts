@@ -373,4 +373,6 @@ export interface TranslationSet {
     weatherCopyToClipboard: string;
 
     githubNavigator: string;
+    githubPrefix: string;
+    githubApiKey: string;
 }

@@ -385,4 +385,6 @@ export const englishTranslationSet: TranslationSet = {
     weatherCopyToClipboard: "Press enter to copy to clipboard",
 
     githubNavigator: "GitHub",
+    githubPrefix: "Prefix",
+    githubApiKey: "API Key",
 };
