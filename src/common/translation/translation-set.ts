@@ -371,4 +371,6 @@ export interface TranslationSet {
     weatherSettingsDescription: string;
     weatherTemperatureUnit: string;
     weatherCopyToClipboard: string;
+
+    githubNavigator: string;
 }

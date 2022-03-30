@@ -109,6 +109,8 @@ export const settingMenuItemComponent = Vue.extend({
                     return config.emailOptions.isEnabled;
                 case PluginSettings.FileBrowser:
                     return config.fileBrowserOptions.isEnabled;
+                case PluginSettings.GitHubNavigator:
+                    return config.gitHubNavigatorOptions.isEnabled;
                 case PluginSettings.OperatingSystemCommands:
                     return config.operatingSystemCommandsOptions.isEnabled;
                 case PluginSettings.OperatingSystemSettings:
