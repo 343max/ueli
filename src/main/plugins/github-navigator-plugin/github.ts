@@ -61,9 +61,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
         return getRoute(userInput, this.config.prefix, this.divider) !== null;
     }
 
-    async getSearchResults(userInput: string, fallback?: boolean): Promise<SearchResultItem[]> {
-        console.log({ getSearchResults: { userInput, fallback } });
-
+    async getSearchResults(userInput: string): Promise<SearchResultItem[]> {
         if (this.gh === undefined) {
             return [
                 getNoSearchResultsFoundResultItem(
