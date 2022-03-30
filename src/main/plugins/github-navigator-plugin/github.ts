@@ -1,40 +1,18 @@
-import { components } from "./../../../../node_modules/@octokit/openapi-types/types.d";
-import { IconType } from "./../../../common/icon/icon-type";
+import { MapFunction } from "./../../../../node_modules/@octokit/plugin-paginate-rest/dist-types/types.d";
+import { SearchResultItem } from "./../../../common/search-result-item";
+import { getRoute, Route } from "./getRoute";
 import { ExecutionPlugin } from "./../../execution-plugin";
 import { UserConfigOptions } from "../../../common/config/user-config-options";
-import { SearchResultItem } from "../../../common/search-result-item";
 import { TranslationSet } from "../../../common/translation/translation-set";
 import { PluginType } from "../../plugin-type";
 import { AutoCompletionPlugin } from "./../../auto-completion-plugin";
 import { GitHubNavigatorOptions } from "../../../common/config/github-navigator-options";
 import { Octokit } from "@octokit/rest";
 import { getNoSearchResultsFoundResultItem } from "../../no-search-results-found-result-item";
+import { searchResultItemFromOrg, searchResultItemFromRepo, searchResultItemFromUser } from "./converters";
 
-const searchResultItemFromOrg =
-    (pluginType: PluginType) =>
-    ({ login, description, avatar_url }: components["schemas"]["organization-simple"]): SearchResultItem => ({
-        name: login,
-        description: description ?? "",
-        icon: { type: IconType.URL, parameter: avatar_url },
-        hideMainWindowAfterExecution: true,
-        originPluginType: pluginType,
-        executionArgument: `${login}/`,
-        searchable: [login],
-        supportsAutocompletion: true,
-    });
-
-const searchResultItemFromUser =
-    (pluginType: PluginType) =>
-    ({ name, login, avatar_url }: components["schemas"]["simple-user"]): SearchResultItem => ({
-        name: login,
-        description: name ?? "",
-        icon: { type: IconType.URL, parameter: avatar_url },
-        hideMainWindowAfterExecution: true,
-        originPluginType: pluginType,
-        executionArgument: `${login}/`,
-        searchable: [login, ...(name ? [name] : [])],
-        supportsAutocompletion: true,
-    });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type GH = { octokit: Octokit; cache: { [key: string]: any } };
 
 export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPlugin {
     public pluginType = PluginType.GitHubNavigator;
@@ -43,8 +21,9 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
     private translationSet: TranslationSet;
     private readonly clipboardCopier: (value: string) => Promise<void>;
     private readonly urlExecutor: (url: string) => Promise<void>;
+    private readonly divider = "/";
 
-    private gh: undefined | "invalid" | { octokit: Octokit; cache: { [key: string]: any } };
+    private gh: undefined | "invalid" | GH;
 
     constructor(
         config: UserConfigOptions,
@@ -78,7 +57,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
     /// ExecutionPlugin
 
     isValidUserInput(userInput: string): boolean {
-        return userInput.startsWith(this.config.prefix) && userInput.length >= this.config.prefix.length;
+        return getRoute(userInput, this.config.prefix, this.divider) !== null;
     }
 
     async getSearchResults(userInput: string, fallback?: boolean): Promise<SearchResultItem[]> {
@@ -102,14 +81,9 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
             ];
         }
 
-        return [
-            searchResultItemFromUser(this.pluginType)(
-                await this.cached("user", this.gh.octokit.users.getAuthenticated)(),
-            ),
-            ...(
-                await this.cached("orgs", this.gh.octokit.rest.orgs.listForAuthenticatedUser)({ per_page: 200 })
-            ).data.map(searchResultItemFromOrg(this.pluginType)),
-        ].filter(({ executionArgument }) => `gh ${executionArgument}`.startsWith(userInput));
+        const route = getRoute(userInput, this.config.prefix, this.divider) as Route;
+
+        return this.search(route, this.gh);
     }
 
     isEnabled(): boolean {
@@ -136,24 +110,53 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
     /// AutoCompletionPlugin
 
     public autoComplete(searchResultItem: SearchResultItem): string {
-        console.log({ autoComplete: { searchResultItem } });
         return `${this.config.prefix}${searchResultItem.executionArgument}`;
     }
 
     /// Helpers
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private cached(cacheKey: string, fn: (...args: any) => Promise<any>): typeof fn {
-        return async (...params: Parameters<typeof fn>) => {
-            if (this.gh === undefined || this.gh === "invalid") {
-                return fn(params);
-            } else if (this.gh.cache[cacheKey] !== undefined) {
-                return this.gh.cache[cacheKey] as Parameters<ReturnType<typeof fn>["then"]>[0];
+    private async search(route: Route, gh: GH): Promise<SearchResultItem[]> {
+        console.log(route);
+        if (route.items.length === 0) {
+            return filterResults(
+                [
+                    searchResultItemFromUser(this.pluginType)(
+                        await (
+                            await this.cached(gh, "user", gh.octokit.users.getAuthenticated)()
+                        ).data,
+                    ),
+                    ...(
+                        await this.cached(gh, "orgs", gh.octokit.rest.orgs.listForAuthenticatedUser)({ per_page: 200 })
+                    ).data.map(searchResultItemFromOrg(this.pluginType)),
+                ],
+                route.userInput,
+            );
+        } else if (route.items.length === 1) {
+            const owner = route.items[0];
+            return filterResults(
+                (await this.cached(gh, `${owner}/repos/`, gh.octokit.rest.repos.listForOrg)({ org: owner })).data.map(
+                    searchResultItemFromRepo(this.pluginType),
+                ),
+                route.userInput,
+            );
+        } else {
+            return [];
+        }
+    }
+
+    private cached<T extends (...args: any[]) => Promise<any>>(gh: GH, cacheKey: string, fn: T) {
+        return async (...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> => {
+            if (gh.cache[cacheKey] !== undefined) {
+                return gh.cache[cacheKey] as Awaited<ReturnType<T>>;
             } else {
-                const result = await fn(params);
-                this.gh.cache[cacheKey] = result;
+                const result = await fn(...args);
+                gh.cache[cacheKey] = result;
                 return result;
             }
         };
     }
+}
+
+function filterResults(results: SearchResultItem[], userInput: string): SearchResultItem[] {
+    return results.filter(({ executionArgument }) => `gh ${executionArgument}`.startsWith(userInput));
 }
