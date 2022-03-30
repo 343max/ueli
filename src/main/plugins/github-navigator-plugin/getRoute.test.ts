@@ -9,17 +9,17 @@ describe(getRoute.name, () => {
 
     test("prefix", () => {
         const res = getRoute("mr ", prefix, divider);
-        expect(res).toStrictEqual({ items: [], incomplete: "", complete: "", userInput: "mr " });
+        expect(res).toStrictEqual({ items: [], incomplete: "", complete: "", path: "" });
     });
 
     test("starting", () => {
         const res = getRoute("mr 343m", prefix, divider);
-        expect(res).toStrictEqual({ items: [], incomplete: "343m", complete: "", userInput: "mr 343m" });
+        expect(res).toStrictEqual({ items: [], incomplete: "343m", complete: "", path: "343m" });
     });
 
     test("starting", () => {
         const res = getRoute("mr 343max/", prefix, divider);
-        expect(res).toStrictEqual({ items: ["343max"], incomplete: "", complete: "343max/", userInput: "mr 343max/" });
+        expect(res).toStrictEqual({ items: ["343max"], incomplete: "", complete: "343max/", path: "343max/" });
     });
 
     test("starting", () => {
@@ -28,7 +28,7 @@ describe(getRoute.name, () => {
             items: ["343max"],
             incomplete: "ue",
             complete: "343max/",
-            userInput: "mr 343max/ue",
+            path: "343max/ue",
         });
     });
     test("starting", () => {
@@ -37,7 +37,7 @@ describe(getRoute.name, () => {
             items: ["343max", "ueli"],
             incomplete: "",
             complete: "343max/ueli/",
-            userInput: "mr 343max/ueli/",
+            path: "343max/ueli/",
         });
     });
     test("starting", () => {
@@ -46,7 +46,7 @@ describe(getRoute.name, () => {
             items: ["343max", "ueli"],
             incomplete: "pull",
             complete: "343max/ueli/",
-            userInput: "mr 343max/ueli/pull",
+            path: "343max/ueli/pull",
         });
     });
 
@@ -56,7 +56,7 @@ describe(getRoute.name, () => {
             items: ["343max", "ueli", "pull"],
             incomplete: "",
             complete: "343max/ueli/pull/",
-            userInput: "mr 343max/ueli/pull/",
+            path: "343max/ueli/pull/",
         });
     });
 });

@@ -1,4 +1,4 @@
-import { MapFunction } from "./../../../../node_modules/@octokit/plugin-paginate-rest/dist-types/types.d";
+import { CachingFunction, setupCache } from "./cache";
 import { SearchResultItem } from "./../../../common/search-result-item";
 import { getRoute, Route } from "./getRoute";
 import { ExecutionPlugin } from "./../../execution-plugin";
@@ -12,7 +12,7 @@ import { getNoSearchResultsFoundResultItem } from "../../no-search-results-found
 import { searchResultItemFromOrg, searchResultItemFromRepo, searchResultItemFromUser } from "./converters";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type GH = { octokit: Octokit; cache: { [key: string]: any } };
+type GH = { octokit: Octokit; cached: CachingFunction<SearchResultItem[]> };
 
 export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPlugin {
     public pluginType = PluginType.GitHubNavigator;
@@ -46,8 +46,9 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
         if (this.config.apiKey.length > 0) {
             const octokit = new Octokit({ auth: this.config.apiKey });
             try {
-                const authenticatedUser = (await octokit.users.getAuthenticated()).data;
-                this.gh = { octokit, cache: { user: authenticatedUser } };
+                void (await octokit.users.getAuthenticated());
+                const cached = setupCache<SearchResultItem[]>();
+                this.gh = { octokit, cached };
             } catch {
                 this.gh = "invalid";
             }
@@ -115,48 +116,32 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
 
     /// Helpers
 
-    private async search(route: Route, gh: GH): Promise<SearchResultItem[]> {
-        console.log(route);
+    private async search(route: Route, { octokit, cached }: GH): Promise<SearchResultItem[]> {
         if (route.items.length === 0) {
-            return filterResults(
-                [
-                    searchResultItemFromUser(this.pluginType)(
-                        await (
-                            await this.cached(gh, "user", gh.octokit.users.getAuthenticated)()
-                        ).data,
-                    ),
-                    ...(
-                        await this.cached(gh, "orgs", gh.octokit.rest.orgs.listForAuthenticatedUser)({ per_page: 200 })
-                    ).data.map(searchResultItemFromOrg(this.pluginType)),
-                ],
-                route.userInput,
-            );
+            return filterResults(route.path, [
+                ...(await cached("/", async () => [
+                    await searchResultItemFromUser(this.pluginType)((await octokit.users.getAuthenticated()).data),
+                ])),
+                ...(await octokit.rest.orgs.listForAuthenticatedUser({ per_page: 200 })).data.map(
+                    searchResultItemFromOrg(this.pluginType),
+                ),
+            ]);
         } else if (route.items.length === 1) {
             const owner = route.items[0];
             return filterResults(
-                (await this.cached(gh, `${owner}/repos/`, gh.octokit.rest.repos.listForOrg)({ org: owner })).data.map(
-                    searchResultItemFromRepo(this.pluginType),
+                route.path,
+                await cached(route.complete, async () =>
+                    (
+                        await octokit.rest.repos.listForOrg({ org: owner })
+                    ).data.map(searchResultItemFromRepo(this.pluginType)),
                 ),
-                route.userInput,
             );
         } else {
             return [];
         }
     }
-
-    private cached<T extends (...args: any[]) => Promise<any>>(gh: GH, cacheKey: string, fn: T) {
-        return async (...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> => {
-            if (gh.cache[cacheKey] !== undefined) {
-                return gh.cache[cacheKey] as Awaited<ReturnType<T>>;
-            } else {
-                const result = await fn(...args);
-                gh.cache[cacheKey] = result;
-                return result;
-            }
-        };
-    }
 }
 
-function filterResults(results: SearchResultItem[], userInput: string): SearchResultItem[] {
-    return results.filter(({ executionArgument }) => `gh ${executionArgument}`.startsWith(userInput));
+function filterResults(path: string, results: SearchResultItem[]): SearchResultItem[] {
+    return results.filter(({ executionArgument }) => executionArgument.startsWith(path));
 }

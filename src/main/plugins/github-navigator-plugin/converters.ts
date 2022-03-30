@@ -38,15 +38,16 @@ export const searchResultItemFromUser =
         supportsAutocompletion: true,
     });
 
-export const searchResultItemFromRepo =
-    (pluginType: PluginType) =>
-    (repo: Awaited<ReturnType<Octokit["rest"]["repos"]["listForOrg"]>>["data"][number]): SearchResultItem => ({
-        name: repo.name,
-        description: repo.description ?? "",
-        icon: defaultCalculatorIcon,
-        hideMainWindowAfterExecution: true,
-        originPluginType: pluginType,
-        executionArgument: `${repo.owner}/${repo.name}/`,
-        searchable: [repo.name],
-        supportsAutocompletion: true,
-    });
+export const searchResultItemFromRepo = (pluginType: PluginType) =>
+    function (repo: Awaited<ReturnType<Octokit["rest"]["repos"]["listForOrg"]>>["data"][number]): SearchResultItem {
+        return {
+            name: repo.name,
+            description: repo.description ?? "",
+            icon: defaultCalculatorIcon,
+            hideMainWindowAfterExecution: true,
+            originPluginType: pluginType,
+            executionArgument: `${repo.owner.login}/${repo.name}/`,
+            searchable: [repo.name],
+            supportsAutocompletion: true,
+        };
+    };
