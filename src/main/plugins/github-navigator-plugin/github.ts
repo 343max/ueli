@@ -1,15 +1,16 @@
-import { CachingFunction, setupCache } from "./cache";
-import { SearchResultItem } from "./../../../common/search-result-item";
-import { getRoute, Route } from "./getRoute";
-import { ExecutionPlugin } from "./../../execution-plugin";
+import Fuse from "fuse.js";
 import { UserConfigOptions } from "../../../common/config/user-config-options";
 import { TranslationSet } from "../../../common/translation/translation-set";
-import { PluginType } from "../../plugin-type";
-import { AutoCompletionPlugin } from "./../../auto-completion-plugin";
-import { GitHubNavigatorOptions } from "../../../common/config/github-navigator-options";
-import { Octokit } from "@octokit/rest";
-import { getNoSearchResultsFoundResultItem } from "../../no-search-results-found-result-item";
 import { searchResultItemFromOrg, searchResultItemFromRepo, searchResultItemFromUser } from "./converters";
+import { SearchResultItem } from "./../../../common/search-result-item";
+import { PluginType } from "../../plugin-type";
+import { Octokit } from "@octokit/rest";
+import { GitHubNavigatorOptions } from "../../../common/config/github-navigator-options";
+import { getRoute, Route } from "./getRoute";
+import { getNoSearchResultsFoundResultItem } from "../../no-search-results-found-result-item";
+import { ExecutionPlugin } from "./../../execution-plugin";
+import { CachingFunction, setupCache } from "./cache";
+import { AutoCompletionPlugin } from "./../../auto-completion-plugin";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type GH = { octokit: Octokit; cached: CachingFunction<SearchResultItem[]> };
@@ -164,7 +165,16 @@ function filterResults(searchTerm: string, results: SearchResultItem[]): SearchR
     if (searchTerm.length === 0) {
         return results;
     } else {
-        const lowerCaseSearchTerm = searchTerm.toLocaleLowerCase();
-        return results.filter(({ name }) => name.toLocaleLowerCase().startsWith(lowerCaseSearchTerm));
+        const fuse = new Fuse(results, {
+            distance: 100,
+            includeScore: true,
+            keys: ["searchable"],
+            location: 0,
+            minMatchCharLength: 1,
+            shouldSort: true,
+            threshold: 0.4,
+        });
+        const fuseResult = fuse.search(searchTerm);
+        return fuseResult.map((item) => item.item);
     }
 }
