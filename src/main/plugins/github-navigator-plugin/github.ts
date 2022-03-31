@@ -1,3 +1,4 @@
+import { GithubHistoryStore, setupGithubHistoryStore } from "./githubHistoryStore";
 import Fuse from "fuse.js";
 import { UserConfigOptions } from "../../../common/config/user-config-options";
 import { TranslationSet } from "../../../common/translation/translation-set";
@@ -29,7 +30,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
     private readonly divider = "/";
 
     private gh: undefined | "invalid" | GH;
-    private history: string[] = [];
+    private readonly history: GithubHistoryStore;
 
     constructor(
         config: UserConfigOptions,
@@ -39,6 +40,8 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
         this.config = config.gitHubNavigatorOptions;
         this.translationSet = translationSet;
         this.urlExecutor = urlExecutor;
+
+        this.history = setupGithubHistoryStore();
 
         this.setupOctokit();
     }
@@ -92,10 +95,9 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
         return this.config.isEnabled;
     }
 
-    execute({ executionArgument }: SearchResultItem): Promise<void> {
+    async execute({ executionArgument }: SearchResultItem) {
         const [owner, repo] = executionArgument.split("/");
-        const path = `${owner}/${repo}`;
-        this.history = [path, ...this.history.filter((value) => path !== value)];
+        await this.history.add(`${owner}/${repo}`);
         return this.urlExecutor(`https://github.com/${executionArgument}`);
     }
 
@@ -136,7 +138,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
                 ).map(searchResultItemFromOrg(this.pluginType)),
             );
 
-            const history = searchResultItemFromHistory(this.pluginType, this.history, [...owner, ...orgs]);
+            const history = searchResultItemFromHistory(this.pluginType, this.history.get(), [...owner, ...orgs]);
 
             return filterResults(route.searchTerm, [...owner, ...orgs, ...history]);
         } else if (route.items.length === 1) {
