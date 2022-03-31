@@ -1,5 +1,6 @@
 import {
     defaultGitHubActionIcon,
+    defaultGitHubCodeIcon,
     defaultGitHubInsightsIcon,
     defaultGitHubPrivateRepoIcon,
     defaultGitHubPullRequestIcon,
@@ -71,24 +72,30 @@ export const repoActionsSearchResults = (
     repo: string,
     owner: string,
 ): SearchResultItem[] => {
-    type Action = { name: string; description: string; icon: Icon };
+    type Action = { name: string; path: string | null; description: string; icon: Icon };
 
     const actions: Action[] = [
-        { name: "pulls", description: "Pull Requests", icon: defaultGitHubPullRequestIcon },
-        { name: `pulls/${owner}`, description: "My Pull Requests", icon: defaultGitHubPullRequestIcon },
-        { name: "actions", description: "Actions", icon: defaultGitHubActionIcon },
-        { name: "security", description: "Security", icon: defaultGitHubSecurityIcon },
-        { name: "insights", description: "Insights", icon: defaultGitHubInsightsIcon },
-        { name: "settings", description: "Settings", icon: defaultGitHubSecurityIcon },
+        { name: "code", path: null, description: "Code", icon: defaultGitHubCodeIcon },
+        { name: "pulls", path: "pulls", description: "Pull Requests", icon: defaultGitHubPullRequestIcon },
+        {
+            name: `pulls/${owner}`,
+            path: `pulls//${owner}`,
+            description: "My Pull Requests",
+            icon: defaultGitHubPullRequestIcon,
+        },
+        { name: "actions", path: "actions", description: "Actions", icon: defaultGitHubActionIcon },
+        { name: "security", path: "security", description: "Security", icon: defaultGitHubSecurityIcon },
+        { name: "insights", path: "insights", description: "Insights", icon: defaultGitHubInsightsIcon },
+        { name: "settings", path: "settings", description: "Settings", icon: defaultGitHubSecurityIcon },
     ];
 
-    return actions.map(({ name, description, icon }) => ({
+    return actions.map(({ name, path, description, icon }) => ({
         name,
         description,
         icon,
         hideMainWindowAfterExecution: true,
         originPluginType: pluginType,
-        executionArgument: `${org}/${repo}/${name}/`,
+        executionArgument: `${org}/${repo}/${path === null ? "" : `${path}/`}`,
         searchable: [name, description],
         supportsAutocompletion: false,
     }));
