@@ -1,6 +1,6 @@
 export type Route = {
     items: string[];
-    incomplete: string;
+    searchTerm: string;
     complete: string;
     path: string;
 };
@@ -14,5 +14,5 @@ export const getRoute = (userInput: string, prefix: string, divider: string): Ro
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const incomplete = complete.pop()!;
 
-    return { items: complete, incomplete, complete: [...complete, ""].join(divider), path };
+    return { items: complete, searchTerm: incomplete, complete: [...complete, ""].join(divider), path };
 };

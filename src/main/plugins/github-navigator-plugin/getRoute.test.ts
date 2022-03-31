@@ -9,24 +9,24 @@ describe(getRoute.name, () => {
 
     test("prefix", () => {
         const res = getRoute("mr ", prefix, divider);
-        expect(res).toStrictEqual({ items: [], incomplete: "", complete: "", path: "" });
+        expect(res).toStrictEqual({ items: [], searchTerm: "", complete: "", path: "" });
     });
 
     test("starting", () => {
         const res = getRoute("mr 343m", prefix, divider);
-        expect(res).toStrictEqual({ items: [], incomplete: "343m", complete: "", path: "343m" });
+        expect(res).toStrictEqual({ items: [], searchTerm: "343m", complete: "", path: "343m" });
     });
 
     test("starting", () => {
         const res = getRoute("mr 343max/", prefix, divider);
-        expect(res).toStrictEqual({ items: ["343max"], incomplete: "", complete: "343max/", path: "343max/" });
+        expect(res).toStrictEqual({ items: ["343max"], searchTerm: "", complete: "343max/", path: "343max/" });
     });
 
     test("starting", () => {
         const res = getRoute("mr 343max/ue", prefix, divider);
         expect(res).toStrictEqual({
             items: ["343max"],
-            incomplete: "ue",
+            searchTerm: "ue",
             complete: "343max/",
             path: "343max/ue",
         });
@@ -35,7 +35,7 @@ describe(getRoute.name, () => {
         const res = getRoute("mr 343max/ueli/", prefix, divider);
         expect(res).toStrictEqual({
             items: ["343max", "ueli"],
-            incomplete: "",
+            searchTerm: "",
             complete: "343max/ueli/",
             path: "343max/ueli/",
         });
@@ -44,7 +44,7 @@ describe(getRoute.name, () => {
         const res = getRoute("mr 343max/ueli/pull", prefix, divider);
         expect(res).toStrictEqual({
             items: ["343max", "ueli"],
-            incomplete: "pull",
+            searchTerm: "pull",
             complete: "343max/ueli/",
             path: "343max/ueli/pull",
         });
@@ -54,7 +54,7 @@ describe(getRoute.name, () => {
         const res = getRoute("mr 343max/ueli/pull/", prefix, divider);
         expect(res).toStrictEqual({
             items: ["343max", "ueli", "pull"],
-            incomplete: "",
+            searchTerm: "",
             complete: "343max/ueli/pull/",
             path: "343max/ueli/pull/",
         });

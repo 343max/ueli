@@ -82,9 +82,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
 
         const route = getRoute(userInput, this.config.prefix, this.divider) as Route;
 
-        const results = await this.search(route, this.gh);
-        console.log(results.length);
-        return results;
+        return await this.search(route, this.gh);
     }
 
     isEnabled(): boolean {
@@ -119,7 +117,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
     private async search(route: Route, { octokit, cached }: GH): Promise<SearchResultItem[]> {
         if (route.items.length === 0) {
             // owner & orgs
-            return filterResults(route.path, [
+            return filterResults(route.searchTerm, [
                 ...(await cached("/", async () => [
                     await searchResultItemFromUser(this.pluginType)((await octokit.users.getAuthenticated()).data),
                 ])),
@@ -135,7 +133,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
             // repos
             const owner = route.items[0];
             return filterResults(
-                route.path,
+                route.searchTerm,
                 await cached(route.complete, async () => {
                     if (owner === (await octokit.users.getAuthenticated()).data.login) {
                         return await (
@@ -162,6 +160,11 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
     }
 }
 
-function filterResults(path: string, results: SearchResultItem[]): SearchResultItem[] {
-    return results.filter(({ executionArgument }) => executionArgument.startsWith(path));
+function filterResults(searchTerm: string, results: SearchResultItem[]): SearchResultItem[] {
+    if (searchTerm.length === 0) {
+        return results;
+    } else {
+        const lowerCaseSearchTerm = searchTerm.toLocaleLowerCase();
+        return results.filter(({ name }) => name.toLocaleLowerCase().startsWith(lowerCaseSearchTerm));
+    }
 }
