@@ -143,11 +143,11 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
             return filterResults(route.searchTerm, [...owner, ...orgs, ...history]);
         } else if (route.items.length === 1) {
             // repos
-            const owner = route.items[0];
+            const org = route.items[0];
             return filterResults(
                 route.searchTerm,
                 await cached(route.complete, async () => {
-                    if (owner === (await octokit.users.getAuthenticated()).data.login) {
+                    if (org === (await octokit.users.getAuthenticated()).data.login) {
                         return await (
                             await octokit.paginate(
                                 octokit.repos.listForAuthenticatedUser,
@@ -159,7 +159,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
                         return (
                             await octokit.paginate(
                                 octokit.rest.repos.listForOrg,
-                                { org: owner, per_page: 100 },
+                                { org: org, per_page: 100 },
                                 ({ data }) => data,
                             )
                         ).map(searchResultItemFromRepo(this.pluginType));
@@ -168,8 +168,12 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
             );
         } else if (route.items.length === 2) {
             // actions on repos
-            const [owner, repo] = route.items;
-            return filterResults(route.searchTerm, repoActionsSearchResults(this.pluginType, owner, repo));
+            const owner = await cached("/:user", async () => [
+                await searchResultItemFromUser(this.pluginType)((await octokit.users.getAuthenticated()).data),
+            ]);
+
+            const [org, repo] = route.items;
+            return filterResults(route.searchTerm, repoActionsSearchResults(this.pluginType, org, repo, owner[0].name));
         } else {
             return [];
         }
