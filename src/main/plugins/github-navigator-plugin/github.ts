@@ -82,7 +82,9 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
 
         const route = getRoute(userInput, this.config.prefix, this.divider) as Route;
 
-        return this.search(route, this.gh);
+        const results = await this.search(route, this.gh);
+        console.log(results.length);
+        return results;
     }
 
     isEnabled(): boolean {
@@ -121,9 +123,13 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
                 ...(await cached("/", async () => [
                     await searchResultItemFromUser(this.pluginType)((await octokit.users.getAuthenticated()).data),
                 ])),
-                ...(await octokit.rest.orgs.listForAuthenticatedUser({ per_page: 500 })).data.map(
-                    searchResultItemFromOrg(this.pluginType),
-                ),
+                ...(
+                    await octokit.paginate(
+                        octokit.rest.orgs.listForAuthenticatedUser,
+                        { per_page: 100 },
+                        ({ data }) => data,
+                    )
+                ).map(searchResultItemFromOrg(this.pluginType)),
             ]);
         } else if (route.items.length === 1) {
             // repos
@@ -132,16 +138,24 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
                 route.path,
                 await cached(route.complete, async () => {
                     if (owner === (await octokit.users.getAuthenticated()).data.login) {
-                        return (await octokit.rest.repos.listForAuthenticatedUser({ per_page: 500 })).data.map(
-                            searchResultItemFromRepo(this.pluginType),
-                        );
+                        return await (
+                            await octokit.paginate(
+                                octokit.repos.listForAuthenticatedUser,
+                                { per_page: 100 },
+                                ({ data }) => data,
+                            )
+                        ).map(searchResultItemFromRepo(this.pluginType));
                     } else {
-                        return (await octokit.rest.repos.listForOrg({ org: owner, per_page: 500 })).data.map(
-                            searchResultItemFromRepo(this.pluginType),
-                        );
+                        return (
+                            await octokit.paginate(
+                                octokit.rest.repos.listForOrg,
+                                { org: owner, per_page: 100 },
+                                ({ data }) => data,
+                            )
+                        ).map(searchResultItemFromRepo(this.pluginType));
                     }
                 }),
-            );
+            ).sort((a, b) => a.name.localeCompare(b.name));
         } else {
             return [];
         }
