@@ -1,7 +1,7 @@
 import Fuse from "fuse.js";
 import { UserConfigOptions } from "../../../common/config/user-config-options";
 import { TranslationSet } from "../../../common/translation/translation-set";
-import { searchResultItemFromOrg, searchResultItemFromRepo, searchResultItemFromUser } from "./converters";
+import { repoActions, searchResultItemFromOrg, searchResultItemFromRepo, searchResultItemFromUser } from "./converters";
 import { SearchResultItem } from "./../../../common/search-result-item";
 import { PluginType } from "../../plugin-type";
 import { Octokit } from "@octokit/rest";
@@ -91,7 +91,6 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
     }
 
     execute(searchResultItem: SearchResultItem): Promise<void> {
-        console.log({ searchResultItem });
         return this.urlExecutor(`https://github.com/${searchResultItem.executionArgument}`);
     }
 
@@ -154,7 +153,11 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
                         ).map(searchResultItemFromRepo(this.pluginType));
                     }
                 }),
-            ).sort((a, b) => a.name.localeCompare(b.name));
+            );
+        } else if (route.items.length === 2) {
+            // actions on repos
+            const [owner, repo] = route.items;
+            return filterResults(route.searchTerm, repoActions(this.pluginType, owner, repo));
         } else {
             return [];
         }

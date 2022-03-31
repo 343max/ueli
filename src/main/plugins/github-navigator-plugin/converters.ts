@@ -56,3 +56,26 @@ export const searchResultItemFromRepo = (pluginType: PluginType) =>
             supportsAutocompletion: true,
         };
     };
+
+export const repoActions = (pluginType: PluginType, owner: string, repo: string): SearchResultItem[] => {
+    type Action = { name: string; description: string };
+
+    const actions: Action[] = [
+        { name: "pulls", description: "Pull Requests" },
+        { name: "actions", description: "Actions" },
+        { name: "security", description: "Security" },
+        { name: "insights", description: "Insights" },
+        { name: "settings", description: "Settings" },
+    ];
+
+    return actions.map(({ name, description }) => ({
+        name,
+        description,
+        icon: defaultCalculatorIcon,
+        hideMainWindowAfterExecution: true,
+        originPluginType: pluginType,
+        executionArgument: `${owner}/${repo}/${name}/`,
+        searchable: [name, description],
+        supportsAutocompletion: false,
+    }));
+};
