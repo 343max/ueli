@@ -18,9 +18,7 @@ type GH = { octokit: Octokit; cached: CachingFunction<SearchResultItem[]> };
 export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPlugin {
     public pluginType = PluginType.GitHubNavigator;
     private config: GitHubNavigatorOptions;
-    // private generalConfig: GeneralOptions;
     private translationSet: TranslationSet;
-    private readonly clipboardCopier: (value: string) => Promise<void>;
     private readonly urlExecutor: (url: string) => Promise<void>;
     private readonly divider = "/";
 
@@ -29,13 +27,10 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
     constructor(
         config: UserConfigOptions,
         translationSet: TranslationSet,
-        clipboardCopier: (value: string) => Promise<void>,
         urlExecutor: (url: string) => Promise<void>,
     ) {
         this.config = config.gitHubNavigatorOptions;
-        // this.generalConfig = config.generalOptions;
         this.translationSet = translationSet;
-        this.clipboardCopier = clipboardCopier;
         this.urlExecutor = urlExecutor;
 
         this.setupOctokit();
@@ -97,7 +92,6 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
     public updateConfig(updatedConfig: UserConfigOptions, translationSet: TranslationSet): Promise<void> {
         return new Promise((resolve) => {
             this.config = updatedConfig.gitHubNavigatorOptions;
-            // this.generalConfig = updatedConfig.generalOptions;
             this.translationSet = translationSet;
 
             this.setupOctokit();
