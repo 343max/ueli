@@ -3,6 +3,7 @@ import { IconType } from "../../../common/icon/icon-type";
 import { SearchResultItem } from "../../../common/search-result-item";
 import { PluginType } from "../../plugin-type";
 import { Octokit } from "@octokit/rest";
+import { Icon } from "../../../common/icon/icon";
 
 export const searchResultItemFromOrg =
     (pluginType: PluginType) =>
@@ -57,7 +58,7 @@ export const searchResultItemFromRepo = (pluginType: PluginType) =>
         };
     };
 
-export const repoActions = (pluginType: PluginType, owner: string, repo: string): SearchResultItem[] => {
+export const repoActionsSearchResults = (pluginType: PluginType, owner: string, repo: string): SearchResultItem[] => {
     type Action = { name: string; description: string };
 
     const actions: Action[] = [
@@ -77,5 +78,30 @@ export const repoActions = (pluginType: PluginType, owner: string, repo: string)
         executionArgument: `${owner}/${repo}/${name}/`,
         searchable: [name, description],
         supportsAutocompletion: false,
+    }));
+};
+
+export const searchResultItemFromHistory = (
+    pluginType: PluginType,
+    history: string[],
+    iconCache: Array<{ login: string; avatar_url: string }>,
+): SearchResultItem[] => {
+    const orgIcon = (value: string): Icon | undefined => {
+        const cacheItem = iconCache.find(({ avatar_url }) => avatar_url === value);
+        if (cacheItem === undefined) {
+            return undefined;
+        } else {
+            return { type: IconType.URL, parameter: cacheItem.avatar_url };
+        }
+    };
+    return history.map((value) => ({
+        name: value,
+        description: "",
+        icon: orgIcon(value.split("/")[0]) ?? defaultCalculatorIcon,
+        hideMainWindowAfterExecution: true,
+        originPluginType: pluginType,
+        executionArgument: `${value}/`,
+        searchable: [value],
+        supportsAutocompletion: true,
     }));
 };

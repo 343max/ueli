@@ -1,7 +1,13 @@
 import Fuse from "fuse.js";
 import { UserConfigOptions } from "../../../common/config/user-config-options";
 import { TranslationSet } from "../../../common/translation/translation-set";
-import { repoActions, searchResultItemFromOrg, searchResultItemFromRepo, searchResultItemFromUser } from "./converters";
+import {
+    repoActionsSearchResults,
+    searchResultItemFromHistory,
+    searchResultItemFromOrg,
+    searchResultItemFromRepo,
+    searchResultItemFromUser,
+} from "./converters";
 import { SearchResultItem } from "./../../../common/search-result-item";
 import { PluginType } from "../../plugin-type";
 import { Octokit } from "@octokit/rest";
@@ -23,6 +29,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
     private readonly divider = "/";
 
     private gh: undefined | "invalid" | GH;
+    private history: string[] = [];
 
     constructor(
         config: UserConfigOptions,
@@ -85,8 +92,11 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
         return this.config.isEnabled;
     }
 
-    execute(searchResultItem: SearchResultItem): Promise<void> {
-        return this.urlExecutor(`https://github.com/${searchResultItem.executionArgument}`);
+    execute({ executionArgument }: SearchResultItem): Promise<void> {
+        const [owner, repo] = executionArgument.split("/");
+        const path = `${owner}/${repo}`;
+        this.history = [path, ...this.history.filter((value) => path !== value)];
+        return this.urlExecutor(`https://github.com/${executionArgument}`);
     }
 
     public updateConfig(updatedConfig: UserConfigOptions, translationSet: TranslationSet): Promise<void> {
@@ -126,7 +136,9 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
                 ).map(searchResultItemFromOrg(this.pluginType)),
             );
 
-            return filterResults(route.searchTerm, [...owner, ...orgs]);
+            const history = searchResultItemFromHistory(this.pluginType, this.history, [...owner, ...orgs]);
+
+            return filterResults(route.searchTerm, [...owner, ...orgs, ...history]);
         } else if (route.items.length === 1) {
             // repos
             const owner = route.items[0];
@@ -155,7 +167,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
         } else if (route.items.length === 2) {
             // actions on repos
             const [owner, repo] = route.items;
-            return filterResults(route.searchTerm, repoActions(this.pluginType, owner, repo));
+            return filterResults(route.searchTerm, repoActionsSearchResults(this.pluginType, owner, repo));
         } else {
             return [];
         }
