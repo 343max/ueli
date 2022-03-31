@@ -1,3 +1,4 @@
+import { SearchPlugin } from "./../../search-plugin";
 import { GithubHistoryStore, setupGithubHistoryStore } from "./githubHistoryStore";
 import Fuse from "fuse.js";
 import { UserConfigOptions } from "../../../common/config/user-config-options";
@@ -22,7 +23,7 @@ import { AutoCompletionPlugin } from "./../../auto-completion-plugin";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type GH = { octokit: Octokit; cached: CachingFunction<SearchResultItem[]> };
 
-export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPlugin {
+export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPlugin, SearchPlugin {
     public pluginType = PluginType.GitHubNavigator;
     private config: GitHubNavigatorOptions;
     private translationSet: TranslationSet;
@@ -118,29 +119,31 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
         return `${this.config.prefix}${searchResultItem.executionArgument}`;
     }
 
+    /// SearchPlugin
+
+    async getAll(): Promise<SearchResultItem[]> {
+        if (typeof this.gh === "object") {
+            return await this.topLevelSearchResults(this.gh);
+        } else {
+            return [];
+        }
+    }
+
+    async refreshIndex(): Promise<void> {
+        // no-op
+    }
+
+    async clearCache(): Promise<void> {
+        // no-op
+    }
+
     /// Helpers
 
     private async search(route: Route, { octokit, cached }: GH): Promise<SearchResultItem[]> {
         if (route.items.length === 0) {
             // owner & orgs
 
-            const owner = await cached("/:user", async () => [
-                await searchResultItemFromUser(this.pluginType)((await octokit.users.getAuthenticated()).data),
-            ]);
-
-            const orgs = await cached("/:orgs", async () =>
-                (
-                    await octokit.paginate(
-                        octokit.rest.orgs.listForAuthenticatedUser,
-                        { per_page: 100 },
-                        ({ data }) => data,
-                    )
-                ).map(searchResultItemFromOrg(this.pluginType)),
-            );
-
-            const history = searchResultItemFromHistory(this.pluginType, this.history.get(), [...owner, ...orgs]);
-
-            return filterResults(route.searchTerm, [...owner, ...orgs, ...history]);
+            return filterResults(route.searchTerm, await this.topLevelSearchResults({ octokit, cached }));
         } else if (route.items.length === 1) {
             // repos
             const org = route.items[0];
@@ -177,6 +180,26 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
         } else {
             return [];
         }
+    }
+
+    private async topLevelSearchResults({ octokit, cached }: GH): Promise<SearchResultItem[]> {
+        const owner = await cached("/:user", async () => [
+            await searchResultItemFromUser(this.pluginType)((await octokit.users.getAuthenticated()).data),
+        ]);
+
+        const orgs = await cached("/:orgs", async () =>
+            (
+                await octokit.paginate(
+                    octokit.rest.orgs.listForAuthenticatedUser,
+                    { per_page: 100 },
+                    ({ data }) => data,
+                )
+            ).map(searchResultItemFromOrg(this.pluginType)),
+        );
+
+        const history = searchResultItemFromHistory(this.pluginType, this.history.get(), [...owner, ...orgs]);
+
+        return [...owner, ...orgs, ...history];
     }
 }
 
