@@ -135,6 +135,8 @@ export function getProductionSearchEngine(
             ? new WindowsOperatingSystemCommandRepository(translationSet)
             : new MacOsOperatingSystemCommandRepository(translationSet);
 
+    const gitHubNavigationPlugin = new GitHubNavigationPlugin(config, translationSet, urlExecutor);
+
     const searchPlugins: SearchPlugin[] = [
         new UeliCommandSearchPlugin(translationSet),
         new ShortcutsSearchPlugin(
@@ -196,6 +198,7 @@ export function getProductionSearchEngine(
             ],
             urlExecutor,
         ),
+        gitHubNavigationPlugin,
     ];
 
     const webSearchPlugin = new WebSearchPlugin(
@@ -223,7 +226,7 @@ export function getProductionSearchEngine(
         new ColorConverterPlugin(config.colorConverterOptions, electronClipboardCopier),
         new DictionaryPlugin(config.dictionaryOptions, electronClipboardCopier, getGoogleDictionaryDefinitions),
         new WeatherPlugin(config, translationSet, electronClipboardCopier),
-        new GitHubNavigationPlugin(config, translationSet, urlExecutor),
+        gitHubNavigationPlugin,
     ];
 
     const fallbackPlugins: ExecutionPlugin[] = [webSearchPlugin];

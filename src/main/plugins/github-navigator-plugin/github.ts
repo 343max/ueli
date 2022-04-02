@@ -33,6 +33,8 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
     private gh: undefined | "invalid" | GH;
     private readonly history: GithubHistoryStore;
 
+    private topLevelSearchResults: SearchResultItem[] = [];
+
     constructor(
         config: UserConfigOptions,
         translationSet: TranslationSet,
@@ -49,6 +51,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
 
     private async setupOctokit() {
         this.gh = undefined;
+        this.topLevelSearchResults = [];
 
         if (this.config.apiKey.length > 0) {
             const octokit = new Octokit({ auth: this.config.apiKey });
@@ -56,6 +59,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
                 void (await octokit.users.getAuthenticated());
                 const cached = setupCache<SearchResultItem[]>();
                 this.gh = { octokit, cached };
+                this.topLevelSearchResults = await this.getTopLevelSearchResults({ octokit, cached });
             } catch {
                 this.gh = "invalid";
             }
@@ -65,7 +69,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
     /// ExecutionPlugin
 
     isValidUserInput(userInput: string): boolean {
-        return getRoute(userInput, this.config.prefix, this.divider) !== null;
+        return this.config.prefix.length > 0 && getRoute(userInput, this.config.prefix, this.divider) !== null;
     }
 
     async getSearchResults(userInput: string): Promise<SearchResultItem[]> {
@@ -122,15 +126,13 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
     /// SearchPlugin
 
     async getAll(): Promise<SearchResultItem[]> {
-        if (typeof this.gh === "object") {
-            return await this.topLevelSearchResults(this.gh);
-        } else {
-            return [];
-        }
+        return this.topLevelSearchResults;
     }
 
     async refreshIndex(): Promise<void> {
-        // no-op
+        if (typeof this.gh === "object") {
+            this.topLevelSearchResults = await this.getTopLevelSearchResults(this.gh);
+        }
     }
 
     async clearCache(): Promise<void> {
@@ -143,7 +145,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
         if (route.items.length === 0) {
             // owner & orgs
 
-            return filterResults(route.searchTerm, await this.topLevelSearchResults({ octokit, cached }));
+            return filterResults(route.searchTerm, this.topLevelSearchResults);
         } else if (route.items.length === 1) {
             // repos
             const org = route.items[0];
@@ -182,7 +184,7 @@ export class GitHubNavigationPlugin implements AutoCompletionPlugin, ExecutionPl
         }
     }
 
-    private async topLevelSearchResults({ octokit, cached }: GH): Promise<SearchResultItem[]> {
+    private async getTopLevelSearchResults({ octokit, cached }: GH): Promise<SearchResultItem[]> {
         const owner = await cached("/:user", async () => [
             await searchResultItemFromUser(this.pluginType)((await octokit.users.getAuthenticated()).data),
         ]);
