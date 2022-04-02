@@ -1,6 +1,6 @@
 import { TranslationSet } from "./translation-set";
 
-export const spanishTranslationSet: TranslationSet = {
+export const spanishTranslationSet: Partial<TranslationSet> = {
     trayIconShow: "Mostrar",
     trayIconSettings: "Configuración",
     trayIconQuit: "Salir",

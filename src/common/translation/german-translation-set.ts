@@ -1,6 +1,6 @@
 import { TranslationSet } from "./translation-set";
 
-export const germanTranslationSet: TranslationSet = {
+export const germanTranslationSet: Partial<TranslationSet> = {
     trayIconShow: "Öffnen",
     trayIconSettings: "Einstellungen",
     trayIconQuit: "Beenden",
@@ -386,4 +386,13 @@ export const germanTranslationSet: TranslationSet = {
         "Mit diesem Plugin können Sie die Wetterbedingungen jeder Region überprüfen. Wenn keine Region angegeben wird, wird standardmäßig das Wetter Ihres aktuellen Standorts angezeigt. Die Daten werden von wttr.in zur Verfügung gestellt",
     weatherTemperatureUnit: "Temperatureinheit",
     weatherCopyToClipboard: "Drücke Enter um in die Zwischenablage zu kopieren",
+
+    githubNavigator: "GitHub",
+    githubPrefix: "Prefix",
+    githubApiKey: "Personal Access Key",
+    githubNoApiKeyErrorMessage: "No Personal Access Key",
+    githubNoApiKeyErrorDescription: "Please add a GitHub Personal Access Key in the settings",
+    githubInvalidApiKeyErrorMessage: "Invalid Personal Access Key",
+    githubInvalidApiKeyErrorDescription:
+        "Your Personal Access Key seems to be invalid. Please replace it int the settings.",
 };

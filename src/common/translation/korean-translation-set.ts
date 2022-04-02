@@ -1,6 +1,6 @@
 import { TranslationSet } from "./translation-set";
 
-export const koreanTranslationSet: TranslationSet = {
+export const koreanTranslationSet: Partial<TranslationSet> = {
     trayIconShow: "보이기",
     trayIconSettings: "설정",
     trayIconQuit: "종료",

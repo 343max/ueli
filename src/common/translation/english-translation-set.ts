@@ -391,5 +391,5 @@ export const englishTranslationSet: TranslationSet = {
     githubNoApiKeyErrorDescription: "Please add a GitHub Personal Access Key in the settings",
     githubInvalidApiKeyErrorMessage: "Invalid Personal Access Key",
     githubInvalidApiKeyErrorDescription:
-        "Your Personal Access Key seems to be invalid. Please rpelace it int the settings.",
+        "Your Personal Access Key seems to be invalid. Please replace it int the settings.",
 };
