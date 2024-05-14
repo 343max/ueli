@@ -371,4 +371,14 @@ export interface TranslationSet {
     weatherSettingsDescription: string;
     weatherTemperatureUnit: string;
     weatherCopyToClipboard: string;
+
+    githubNavigator: string;
+    githubPrefix: string;
+    githubApiKey: string;
+
+    githubNoApiKeyErrorMessage: string;
+    githubNoApiKeyErrorDescription: string;
+
+    githubInvalidApiKeyErrorMessage: string;
+    githubInvalidApiKeyErrorDescription: string;
 }

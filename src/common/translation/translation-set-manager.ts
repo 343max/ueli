@@ -17,25 +17,25 @@ export function getTranslationSet(language: Language): TranslationSet {
         case Language.English:
             return englishTranslationSet;
         case Language.German:
-            return germanTranslationSet;
+            return { ...germanTranslationSet, ...englishTranslationSet };
         case Language.Hindi:
-            return hindiTranslationSet;
+            return { ...hindiTranslationSet, ...englishTranslationSet };
         case Language.Portuguese:
-            return portugueseTranslationSet;
+            return { ...portugueseTranslationSet, ...englishTranslationSet };
         case Language.Russian:
-            return russianTranslationSet;
+            return { ...russianTranslationSet, ...englishTranslationSet };
         case Language.Turkish:
-            return turkishTranslationSet;
+            return { ...turkishTranslationSet, ...englishTranslationSet };
         case Language.Spanish:
-            return spanishTranslationSet;
+            return { ...spanishTranslationSet, ...englishTranslationSet };
         case Language.Chinese:
-            return chineseTranslationSet;
+            return { ...chineseTranslationSet, ...englishTranslationSet };
         case Language.Korean:
-            return koreanTranslationSet;
+            return { ...koreanTranslationSet, ...englishTranslationSet };
         case Language.Japanese:
-            return japaneseTranslationSet;
+            return { ...japaneseTranslationSet, ...englishTranslationSet };
         case Language.Italian:
-            return italianTranslationSet;
+            return { ...italianTranslationSet, ...englishTranslationSet };
         default:
             return englishTranslationSet;
     }

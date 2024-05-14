@@ -383,4 +383,13 @@ export const englishTranslationSet: TranslationSet = {
         "This plugin enables you to check the weather condition of any region. If no region is provided, it defaults to show the weather of your current location. Data is provided by wttr.in",
     weatherTemperatureUnit: "Temperature Unit",
     weatherCopyToClipboard: "Press enter to copy to clipboard",
+
+    githubNavigator: "GitHub",
+    githubPrefix: "Prefix",
+    githubApiKey: "Personal Access Key",
+    githubNoApiKeyErrorMessage: "No Personal Access Key",
+    githubNoApiKeyErrorDescription: "Please add a GitHub Personal Access Key in the settings",
+    githubInvalidApiKeyErrorMessage: "Invalid Personal Access Key",
+    githubInvalidApiKeyErrorDescription:
+        "Your Personal Access Key seems to be invalid. Please replace it int the settings.",
 };

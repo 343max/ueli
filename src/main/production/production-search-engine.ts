@@ -66,6 +66,7 @@ import { getWebearchSuggestions } from "../executors/websearch-suggestion-resolv
 import { FirefoxBookmarkRepository } from "../plugins/browser-bookmarks-plugin/firefox-bookmark-repository";
 import { ChromiumBookmarkRepository } from "../plugins/browser-bookmarks-plugin/chromium-bookmark-repository";
 import { WeatherPlugin } from "../plugins/weather-plugin/weather-plugin";
+import { GitHubNavigationPlugin } from "../plugins/github-navigator-plugin/github";
 
 export function getProductionSearchEngine(
     operatingSystem: OperatingSystem,
@@ -134,6 +135,8 @@ export function getProductionSearchEngine(
             ? new WindowsOperatingSystemCommandRepository(translationSet)
             : new MacOsOperatingSystemCommandRepository(translationSet);
 
+    const gitHubNavigationPlugin = new GitHubNavigationPlugin(config, translationSet, urlExecutor);
+
     const searchPlugins: SearchPlugin[] = [
         new UeliCommandSearchPlugin(translationSet),
         new ShortcutsSearchPlugin(
@@ -195,6 +198,7 @@ export function getProductionSearchEngine(
             ],
             urlExecutor,
         ),
+        gitHubNavigationPlugin,
     ];
 
     const webSearchPlugin = new WebSearchPlugin(
@@ -222,6 +226,7 @@ export function getProductionSearchEngine(
         new ColorConverterPlugin(config.colorConverterOptions, electronClipboardCopier),
         new DictionaryPlugin(config.dictionaryOptions, electronClipboardCopier, getGoogleDictionaryDefinitions),
         new WeatherPlugin(config, translationSet, electronClipboardCopier),
+        gitHubNavigationPlugin,
     ];
 
     const fallbackPlugins: ExecutionPlugin[] = [webSearchPlugin];

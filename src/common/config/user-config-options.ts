@@ -1,3 +1,4 @@
+import { defaultGitHubNavigatorOptions, GitHubNavigatorOptions } from "./github-navigator-options";
 import { GeneralOptions, defaultGeneralOptions } from "./general-options";
 import { SearchEngineOptions, defaultSearchEngineOptions } from "./search-engine-options";
 import { AppearanceOptions, defaultAppearanceOptions } from "./appearance-options";
@@ -58,6 +59,7 @@ export interface UserConfigOptions {
     browserBookmarksOptions: BrowserBookmarksOptions;
     controlPanelOptions: ControlPanelOptions;
     weatherOptions: WeatherOptions;
+    gitHubNavigatorOptions: GitHubNavigatorOptions;
 }
 
 export const defaultUserConfigOptions: UserConfigOptions = {
@@ -87,4 +89,5 @@ export const defaultUserConfigOptions: UserConfigOptions = {
     weatherOptions: defaultWeatherOptions,
     websearchOptions: defaultWebSearchOptions,
     workflowOptions: defaultWorkflowOptions,
+    gitHubNavigatorOptions: defaultGitHubNavigatorOptions,
 };
